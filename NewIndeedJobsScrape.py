@@ -35,7 +35,7 @@ def getHTML(urlList):
         for url in urlList:
             # Need to request all with minimal delay between requests
             # Long delay means more time for new jobs to be added on website
-            # New jobs being added between requests produced bad data
+            # New jobs being added between html requests produces inconsistent data
             print("Requesting HTML from:  " + url)
             targetHTML = requests.get(url)
             htmlList.append(targetHTML)
@@ -63,6 +63,7 @@ def getHTML(urlList):
 
     return htmlList
 
+###
 def getSoup(htmlList):
     HTMLSoupList = []
 
@@ -98,20 +99,21 @@ def scrapeNewJobData(jobTypesToScrape):
         lastJobCount = None
 
         for soup in soupList:
-            if soup == None:
-                jobCount = None
-            elif soup == "NO NEW JOBS":
+            if soup == "NO NEW JOBS":
                 jobCount = 0
             else:
                 jobCount = soup[0]
+                # String will be in the format, 'Page 1 of 27 jobs'
+                # The number before 'jobs' is the target date
                 jobCount = jobCount.string.replace(" ","")[8:-4]
+                # Target data may contain commas eg '8,000'
                 jobCount = jobCount.replace(",", "")
                 jobCount = int(jobCount)
 
                 if lastJobCount == None:
                     lastJobCount = jobCount
                 elif lastJobCount < jobCount:
-                    print("Bad data detected! Will retry " + type + " job scrape")
+                    print("Inconsistent data detected! Will retry " + type + " job scrape")
                     typesToRescrape.append(type)
                     jobCountsDict[type] = []
                     break
@@ -124,7 +126,7 @@ def scrapeNewJobData(jobTypesToScrape):
     currentLoopBadDataCount = len(typesToRescrape)
     if currentLoopBadDataCount > 0:
         newLine()
-        print("Retrying " + str(currentLoopBadDataCount) +  " bad data scrapes")
+        print("Retrying " + str(currentLoopBadDataCount) +  " inconsistent data scrapes")
         rescrapeCount = scrapeNewJobData(typesToRescrape) + currentLoopBadDataCount
         return rescrapeCount
 
@@ -149,7 +151,6 @@ if __name__ == '__main__':
     print("Scrape Sucessfull!")
     print(str(totalRescrapes) + " Rescrapes were performed")
 
-    newLine()
     print("Writing results to file: jobs.csv")
     with open('jobs.csv', 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
