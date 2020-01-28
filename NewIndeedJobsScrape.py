@@ -47,7 +47,7 @@ def getHTML(urlList):
                 print("No HTML request Errors")
                 continueChecking = False
             else:
-                print("HTML request returned error status code: " + str(targetHTML.status_code))
+                print("HTML request returned error status code: " + str(htmlRequest.status_code))
                 if requestsRetryCount > 5:
                     print("Failed to fetch target HTML")
                     print("Unknown number of Jobs Matching criteria!")
