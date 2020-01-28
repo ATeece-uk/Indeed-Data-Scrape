@@ -95,7 +95,7 @@ def scrapeNewJobData(jobTypesToScrape):
         newLine()
         print("Extracting Data...")
 
-        jobCountsDict[type] = []
+        rawJobsDataDict[type] = []
         lastJobCount = None
 
         for soup in soupList:
@@ -115,12 +115,12 @@ def scrapeNewJobData(jobTypesToScrape):
                 elif lastJobCount < jobCount:
                     print("Inconsistent data detected! Will retry " + type + " job scrape")
                     typesToRescrape.append(type)
-                    jobCountsDict[type] = []
+                    rawJobsDataDict[type] = []
                     break
 
                 lastJobCount = jobCount
 
-            jobCountsDict[type].append(jobCount)
+            rawJobsDataDict[type].append(jobCount)
             print("Extraction Complete: " + str(jobCount))
 
     currentLoopBadDataCount = len(typesToRescrape)
@@ -132,6 +132,28 @@ def scrapeNewJobData(jobTypesToScrape):
 
     return 0
 
+###
+def initialDataProcessing(rawJobsDataDict):
+    newLine()
+    print("Performing initial data processing")
+    processedJobsDataDict = {}
+    for type in allJobTypes:
+        processedData = []
+        rawData = rawJobsDataDict[type]
+        print(rawData)
+        rawData.reverse()
+
+        processedData.append(rawData[0])
+        for i in range(0, len(rawData)-1):
+            processedData.append(rawData[i+1]-rawData[i])
+        processedData.append(rawData[-1])
+
+        processedData.reverse()
+        processedJobsDataDict[type] = processedData
+        newLine()
+    
+    return processedJobsDataDict
+
 
 ##### MAIN #####
 if __name__ == '__main__':
@@ -141,7 +163,7 @@ if __name__ == '__main__':
                 "apprenticeship", "commission", "volunteer", "internship"]
     minSalaries = ["£0", "£10,000","£20,000","£30,000",
                     "£40,000","£50,000", "£60,000"]
-    jobCountsDict = {}
+    rawJobsDataDict = {}
 
     newLine()
     print("!!! Indeed.co.uk Daily Job Scrapper !!!")
@@ -151,8 +173,10 @@ if __name__ == '__main__':
     print("Scrape Sucessfull!")
     print(str(totalRescrapes) + " Rescrapes were performed")
 
+    processedJobsDataDict = initialDataProcessing(rawJobsDataDict)
+
     print("Writing results to file: jobs.csv")
-    with open('jobs.csv', 'a', newline='') as csvfile:
+    with open('jobsData.csv', 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         for type in allJobTypes:
-            writer.writerow([todaysDate] + [type] + jobCountsDict[type])
+            writer.writerow([todaysDate] + [type] + processedJobsDataDict[type])
