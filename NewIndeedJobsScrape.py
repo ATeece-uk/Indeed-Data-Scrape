@@ -69,15 +69,19 @@ def getSoup(htmlList):
 
     newLine()
     print("Screening fetched HTML...")
-    for targetHTML in htmlList:
-        soup = BeautifulSoup(targetHTML.text, 'html.parser')
-        targetHTMLSoup = soup.select('#searchCountPages')
-        if len(targetHTMLSoup) > 0:
-            print("New job data found.")
-            HTMLSoupList.append(targetHTMLSoup)
-        else:
-            print("No new job data matching criteria.")
-            HTMLSoupList.append("NO NEW JOBS")
+    if htmlList[0] != None:
+        for targetHTML in htmlList:
+            soup = BeautifulSoup(targetHTML.text, 'html.parser')
+            targetHTMLSoup = soup.select('#searchCountPages')
+            if len(targetHTMLSoup) > 0:
+                print("New job data found.")
+                HTMLSoupList.append(targetHTMLSoup)
+            else:
+                print("No new job data matching criteria.")
+                HTMLSoupList.append("NO NEW JOBS")
+    else:
+        print("Skipping Null Data")
+        HTMLSoupList = [None] * len(htmlList)
 
     return HTMLSoupList
 
@@ -99,7 +103,11 @@ def scrapeNewJobData(jobTypesToScrape):
         lastJobCount = None
 
         for soup in soupList:
-            if soup == "NO NEW JOBS":
+            if soup == None:
+                print("Skipping Null Data")
+                rawJobsDataDict[type] = [None] * len(soupList)
+                break
+            elif soup == "NO NEW JOBS":
                 jobCount = 0
             else:
                 jobCount = soup[0]
@@ -134,23 +142,25 @@ def scrapeNewJobData(jobTypesToScrape):
 
 ###
 def initialDataProcessing(rawJobsDataDict):
-    newLine()
-    print("Performing initial data processing")
+    print("Performing initial data processing...")
     processedJobsDataDict = {}
     for type in allJobTypes:
         processedData = []
         rawData = rawJobsDataDict[type]
-        print(rawData)
         rawData.reverse()
 
-        processedData.append(rawData[0])
-        for i in range(0, len(rawData)-1):
-            processedData.append(rawData[i+1]-rawData[i])
-        processedData.append(rawData[-1])
+        if rawData[0] != None:
 
-        processedData.reverse()
+            processedData.append(rawData[0])
+            for i in range(0, len(rawData)-1):
+                processedData.append(rawData[i+1]-rawData[i])
+
+            processedData.append(rawData[-1])
+            processedData.reverse()
+        else:
+            processedData = [""] * len(rawData)
+            
         processedJobsDataDict[type] = processedData
-        newLine()
     
     return processedJobsDataDict
 
